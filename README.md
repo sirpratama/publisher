@@ -92,4 +92,16 @@ This is the place for you to write reflections:
 
 #### Reflection Publisher-2
 
+1. In the Model-View Controller (MVC) compound pattern, there is no "Service" and "Repository". Model in MVC covers both data storage and business logic. In this module, we separate "Service" and "Repository" from a Model. Explain based on your understanding of design principles, why do we need to separate "Service" and "Repository" from a Model?
+
+    Separating Service and Repository from the Model follows the **Single Responsibility Principle (SRP)** and **Separation of Concerns**. The Model should only represent the data structure. The Repository handles data access and persistence logic (CRUD operations on the data store), while the Service handles business logic and orchestration. Without this separation, the Model would become bloated with responsibilities — it would need to know how to store itself, validate business rules, and represent data all at once. By separating them, each layer has a single reason to change: the Model changes when the data structure changes, the Repository changes when the storage mechanism changes, and the Service changes when business rules change.
+
+2. What happens if we only use the Model without separating "Service" and "Repository"? Explain your imagination on how the interactions between each model (`Program`, `Subscriber`, `Notification`) affect the code complexity for each model?
+
+    If we only use the Model, each model would contain data access logic, business logic, and inter-model interactions all in one place. For example, `Product` would need to know how to store itself, fetch subscribers, create notifications, and send HTTP requests. `Subscriber` would need to know how to register itself in storage and handle incoming notifications. `Notification` would need to know about both products and subscribers. This creates tight coupling between models — changing one model's logic would ripple through the others. The code complexity grows quadratically because every model depends on every other model directly, making it extremely hard to maintain, test, and extend.
+
+3. Have you explored things outside of the steps in the tutorial, for example: `src/lib.rs`? If not, explain why you did not do so; if yes, explain things that you have learned from those other parts of the code.
+
+    Yes, I explored `src/lib.rs`. It defines the application-level configuration and utilities. The `AppConfig` struct uses `getset` for auto-generating getters and `dotenvy` for loading environment variables from `.env` files. The `lazy_static!` macro is used to create global singletons for the `REQWEST_CLIENT` (HTTP client for making requests to subscribers) and `APP_CONFIG`. The file also defines a custom `Result` type alias and `Error` type using Rocket's `Custom` response wrapper, along with a `compose_error_response` helper function. This pattern centralizes error handling and configuration, making it reusable across all services and controllers.
+
 #### Reflection Publisher-3
