@@ -78,6 +78,18 @@ This is the place for you to write reflections:
 
 #### Reflection Publisher-1
 
+1. In the Observer pattern diagram explained in the Head First Design Patterns book, Subscriber is defined as an interface. Explain based on your understanding of Observer design patterns, do we still need an interface (or **trait** in Rust) in this BambangShop case, or a single Model **struct** is enough?
+
+    In this BambangShop case, a single `Subscriber` model struct is sufficient. We do not need a trait (interface) because all subscribers behave the same way — they all have a `url` and a `name`, and they all receive notifications through the same HTTP POST mechanism. A trait would be useful if we had multiple types of subscribers with different notification behaviors (e.g., email subscriber, SMS subscriber, webhook subscriber), but since all subscribers in BambangShop are notified via the same HTTP endpoint pattern, a single struct adequately represents the observer.
+
+2. **id** in `Program` and **url** in `Subscriber` are intended to be unique. Explain based on your understanding, is using **Vec** (list) sufficient or using **DashMap** (map/dictionary) necessary for this case?
+
+    Using a `DashMap` is necessary rather than a `Vec`. Since `id` and `url` must be unique, we need a data structure that enforces or naturally supports uniqueness. With a `Vec`, we would need to iterate through the entire list every time we want to check for duplicates, find, or delete a subscriber — resulting in O(n) time complexity for these operations. A `DashMap` provides O(1) average-case lookups, insertions, and deletions by key, making it more efficient and naturally suitable for enforcing uniqueness.
+
+3. When programming using Rust, we are enforced by rigorous compiler constraints to make a thread-safe program. In the case of the List of Subscribers (**SUBSCRIBERS**) static variable, we used the **DashMap** external library. Explain based on your understanding of design patterns, do we still need **DashMap** or we can implement Singleton pattern instead?
+
+    We still need `DashMap` even with a Singleton pattern. The Singleton pattern ensures there is only one instance of the subscribers collection, but it does not by itself guarantee thread-safe concurrent access. `DashMap` provides built-in thread-safe concurrent read and write operations without requiring explicit locking. If we used a regular `HashMap` wrapped in a `Mutex` or `RwLock`, it would work but with worse performance under concurrent access because the entire map would be locked. `DashMap` uses sharded locking internally, allowing multiple threads to read/write different parts of the map simultaneously. In Rust's `lazy_static!`, we already achieve the Singleton pattern — `DashMap` complements it by providing safe concurrent access.
+
 #### Reflection Publisher-2
 
 #### Reflection Publisher-3
