@@ -105,3 +105,26 @@ This is the place for you to write reflections:
     Yes, I explored `src/lib.rs`. It defines the application-level configuration and utilities. The `AppConfig` struct uses `getset` for auto-generating getters and `dotenvy` for loading environment variables from `.env` files. The `lazy_static!` macro is used to create global singletons for the `REQWEST_CLIENT` (HTTP client for making requests to subscribers) and `APP_CONFIG`. The file also defines a custom `Result` type alias and `Error` type using Rocket's `Custom` response wrapper, along with a `compose_error_response` helper function. This pattern centralizes error handling and configuration, making it reusable across all services and controllers.
 
 #### Reflection Publisher-3
+
+1. Observer Pattern has two variations: **Push model** (publisher pushes data to subscribers) and **Pull model** (subscribers pull data from publisher). In this tutorial case, which variation of Observer Pattern that we use?
+
+    This tutorial uses the **Push model**. When a product is created, deleted, or promoted, the publisher (main app) actively pushes notification data to each subscriber by sending HTTP POST requests to each subscriber's URL. The subscribers do not need to request or poll for updates — the publisher takes the initiative to push the `Notification` payload containing all relevant information (product title, type, URL, subscriber name, status) directly to each subscriber's `/receive` endpoint.
+
+2. What are the advantages and disadvantages of using the other variation of Observer Pattern for this tutorial case? (example: if you answer Push, then what are the advantages and disadvantages of Pull)
+
+    If we used the **Pull model** instead:
+
+    **Advantages:**
+    - Subscribers have more control over when they retrieve data, reducing unnecessary processing when they're busy.
+    - The publisher is simpler since it only needs to notify subscribers that something changed, without sending full payload data.
+    - Subscribers can selectively pull only the data they need, reducing bandwidth usage.
+
+    **Disadvantages:**
+    - Subscribers need to make additional HTTP requests to the publisher to fetch the actual data after being notified, increasing latency and network overhead.
+    - The publisher needs to expose additional endpoints for subscribers to pull data from.
+    - Subscribers may miss time-sensitive notifications if they don't pull frequently enough.
+    - More complex implementation on the subscriber side — each subscriber needs to know how to query the publisher for relevant data.
+
+3. Explain what will happen to the program if we decide to not use multi-threading in the notification process.
+
+    If we do not use multi-threading (`thread::spawn`) in the notification process, the `notify` function would send HTTP POST requests to each subscriber **sequentially** on the main thread. This means each notification must complete (or timeout) before the next one is sent. If there are many subscribers or if a subscriber's server is slow to respond, the entire `notify` process would block the main application thread. This would cause the API response (e.g., product creation or deletion) to take a very long time to return, because the server has to wait for all subscriber notifications to finish before responding to the original request. In the worst case, a single unresponsive subscriber could delay the entire system. With multi-threading, each notification is sent in a separate thread, allowing them to execute concurrently and the main thread to return a response immediately.
